@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CapRover — an open-source Docker-based PaaS (Platform as a Service) for deploying and managing applications. TypeScript/Node.js backend using Express.js v5, with Docker Swarm orchestration, nginx reverse proxy, and Let's Encrypt SSL integration.
+CaptainOps(Caprover fork) — an open-source Docker-based PaaS (Platform as a Service) for deploying and managing applications. TypeScript/Node.js backend using Express.js v5, with Docker Swarm orchestration, nginx reverse proxy, and Let's Encrypt SSL integration.
 
 ## Build & Development Commands
 
