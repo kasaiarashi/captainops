@@ -5,6 +5,9 @@ if ! [ $(id -u) ] <>0; then
    exit 1
 fi
 
+CAPTAIN_DATA_DIR="${CAPTAIN_BASE_DIRECTORY:-$HOME/captain-data}"
+mkdir -p "$CAPTAIN_DATA_DIR"
+
 pwd >currentdirectory
 docker service rm $(docker service ls -q)
 sleep 1
@@ -13,8 +16,9 @@ docker build -t captain-debug -f dockerfile-captain.debug .
 docker run \
    -e "CAPTAIN_IS_DEBUG=1" \
    -e "MAIN_NODE_IP_ADDRESS=127.0.0.1" \
+   -e "CAPTAIN_BASE_DIRECTORY=/captain" \
    -v /var/run/docker.sock:/var/run/docker.sock \
-   -v /captain:/captain \
+   -v "$CAPTAIN_DATA_DIR":/captain \
    -v $(pwd):/usr/src/app captain-debug
 sleep 2s
 docker service logs captain-captain --follow

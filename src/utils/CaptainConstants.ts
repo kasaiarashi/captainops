@@ -49,7 +49,7 @@ const configs = {
 
     nginxImageName: 'nginx:1.27.2',
 
-    defaultEmail: 'runner@caprover.com',
+    defaultEmail: 'runner@captainops.kriaa.in',
 
     captainSubDomain: 'captain',
 
@@ -57,7 +57,7 @@ const configs = {
 
     useExistingSwarm: false,
 
-    proApiDomains: ['https://pro.caprover.com'],
+    proApiDomains: ['https://pro.captainops.kriaa.in'],
 
     analyticsDomain: 'https://analytics-v1.caprover.com',
 

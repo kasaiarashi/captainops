@@ -1,5 +1,34 @@
 import { IHashMapGeneric } from './ICacheGeneric'
 
+export type BlueGreenSlot = 'blue' | 'green'
+export type AppEnvironment = 'development' | 'staging' | 'production'
+
+export interface BlueGreenConfig {
+    enabled: boolean
+    activeSlot: BlueGreenSlot
+    previousActiveSlot?: BlueGreenSlot
+    autoSwitchEnabled: boolean
+    autoSwitchDelayMinutes: number
+    healthCheckPath: string
+    healthCheckIntervalSeconds: number
+    healthCheckTimeoutSeconds: number
+    healthCheckThreshold: number
+}
+
+export interface SlotDeploymentMetadata {
+    slot: BlueGreenSlot
+    deployedAt: string
+    deployedVersion: number
+    deployedImageName: string
+    status:
+        | 'deploying'
+        | 'deployed'
+        | 'health-checking'
+        | 'live'
+        | 'idle'
+        | 'failed'
+}
+
 export type IAllAppDefinitions = IHashMapGeneric<IAppDef>
 
 export interface IAppEnvVar {
@@ -84,6 +113,12 @@ export interface IAppDefinitionBase {
     envVars: IAppEnvVar[]
     versions: IAppVersion[]
     appDeployTokenConfig?: AppDeployTokenConfig
+    environment?: AppEnvironment
+    blueGreen?: BlueGreenConfig
+    slotDeployments?: {
+        blue?: SlotDeploymentMetadata
+        green?: SlotDeploymentMetadata
+    }
 }
 
 export interface IHttpAuth {

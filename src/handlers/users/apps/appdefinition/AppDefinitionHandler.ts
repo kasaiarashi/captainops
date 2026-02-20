@@ -21,6 +21,7 @@ export interface RegisterAppDefinitionParams {
     projectId: string
     hasPersistentData: boolean
     isDetachedBuild: boolean
+    environment?: 'development' | 'staging' | 'production'
 }
 
 export async function registerAppDefinition(
@@ -28,7 +29,13 @@ export async function registerAppDefinition(
     dataStore: DataStore,
     serviceManager: ServiceManager
 ): Promise<BaseHandlerResult> {
-    const { appName, projectId, hasPersistentData, isDetachedBuild } = params
+    const {
+        appName,
+        projectId,
+        hasPersistentData,
+        isDetachedBuild,
+        environment,
+    } = params
     let appCreated = false
 
     Logger.d(`Registering app started: ${appName}`)
@@ -43,7 +50,12 @@ export async function registerAppDefinition(
         // Register the app definition
         await dataStore
             .getAppsDataStore()
-            .registerAppDefinition(appName, projectId, hasPersistentData)
+            .registerAppDefinition(
+                appName,
+                projectId,
+                hasPersistentData,
+                environment
+            )
 
         appCreated = true
 

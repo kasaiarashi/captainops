@@ -2,6 +2,9 @@ import { v4 as uuid } from 'uuid'
 import ApiStatusCodes from '../api/ApiStatusCodes'
 import {
     AppDeployTokenConfig,
+    AppEnvironment,
+    BlueGreenConfig,
+    BlueGreenSlot,
     IAllAppDefinitions,
     IAppDef,
     IAppDefSaved,
@@ -12,6 +15,7 @@ import {
     IAppVolume,
     IHttpAuth,
     RepoInfo,
+    SlotDeploymentMetadata,
 } from '../models/AppDefinition'
 import { IBuiltImage } from '../models/IBuiltImage'
 import Authenticator from '../user/Authenticator'
@@ -296,6 +300,27 @@ class AppsDataStore {
 
     getServiceName(appName: string) {
         return `srv-${this.namepace}--${appName}`
+    }
+
+    getBlueServiceName(appName: string) {
+        return `srv-${this.namepace}--${appName}-blue`
+    }
+
+    getGreenServiceName(appName: string) {
+        return `srv-${this.namepace}--${appName}-green`
+    }
+
+    getSlotServiceName(appName: string, slot: BlueGreenSlot) {
+        return slot === 'blue'
+            ? this.getBlueServiceName(appName)
+            : this.getGreenServiceName(appName)
+    }
+
+    getActiveServiceName(appName: string, app: IAppDef) {
+        if (app.blueGreen?.enabled) {
+            return this.getSlotServiceName(appName, app.blueGreen.activeSlot)
+        }
+        return this.getServiceName(appName)
     }
 
     getVolumeName(volumeName: string) {
@@ -865,6 +890,32 @@ class AppsDataStore {
             })
     }
 
+    setBlueGreenConfig(
+        appName: string,
+        blueGreen: BlueGreenConfig | undefined,
+        slotDeployments:
+            | {
+                  blue?: SlotDeploymentMetadata
+                  green?: SlotDeploymentMetadata
+              }
+            | undefined
+    ) {
+        if (blueGreen) {
+            this.data.set(`${APP_DEFINITIONS}.${appName}.blueGreen`, blueGreen)
+        } else {
+            this.data.delete(`${APP_DEFINITIONS}.${appName}.blueGreen`)
+        }
+
+        if (slotDeployments) {
+            this.data.set(
+                `${APP_DEFINITIONS}.${appName}.slotDeployments`,
+                slotDeployments
+            )
+        } else {
+            this.data.delete(`${APP_DEFINITIONS}.${appName}.slotDeployments`)
+        }
+    }
+
     deleteAppDefinition(appName: string) {
         const self = this
 
@@ -906,7 +957,8 @@ class AppsDataStore {
     registerAppDefinition(
         appName: string,
         projectId: string | undefined,
-        hasPersistentData: boolean
+        hasPersistentData: boolean,
+        environment?: AppEnvironment
     ) {
         const self = this
 
@@ -934,6 +986,7 @@ class AppsDataStore {
             const defaultAppDefinition: IAppDef = {
                 hasPersistentData: !!hasPersistentData,
                 projectId: projectId,
+                environment: environment,
                 description: '',
                 instanceCount: 1,
                 captainDefinitionRelativeFilePath:

@@ -17,4 +17,8 @@ export interface IServerBlockDetails {
     logAccessPath?: string
     gzipOn?: boolean
     gzipTypes?: string
+    isBlueGreen?: boolean
+    blueLocalDomain?: string
+    greenLocalDomain?: string
+    activeSlot?: 'blue' | 'green'
 }

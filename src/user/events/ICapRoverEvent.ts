@@ -6,6 +6,13 @@ export enum CapRoverEventType {
     OneClickAppDetailsFetched = 'OneClickAppDetailsFetched',
     OneClickAppListFetched = 'OneClickAppListFetched',
     OneClickAppDeployStarted = 'OneClickAppDeployStarted',
+    BlueGreenDeployStarted = 'BlueGreenDeployStarted',
+    BlueGreenDeployCompleted = 'BlueGreenDeployCompleted',
+    BlueGreenDeployFailed = 'BlueGreenDeployFailed',
+    BlueGreenSwitchCompleted = 'BlueGreenSwitchCompleted',
+    BlueGreenSwitchFailed = 'BlueGreenSwitchFailed',
+    BlueGreenRollback = 'BlueGreenRollback',
+    BlueGreenHealthCheckFailed = 'BlueGreenHealthCheckFailed',
 }
 
 export interface ICapRoverEvent {

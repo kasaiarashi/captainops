@@ -333,6 +333,21 @@ class LoadBalancerManager {
                           )
                         : undefined
 
+                    if (webApp.blueGreen?.enabled) {
+                        serverWithSubDomain.isBlueGreen = true
+                        serverWithSubDomain.blueLocalDomain = dataStore
+                            .getAppsDataStore()
+                            .getBlueServiceName(appName)
+                        serverWithSubDomain.greenLocalDomain = dataStore
+                            .getAppsDataStore()
+                            .getGreenServiceName(appName)
+                        serverWithSubDomain.activeSlot =
+                            webApp.blueGreen.activeSlot
+                        serverWithSubDomain.localDomain = dataStore
+                            .getAppsDataStore()
+                            .getActiveServiceName(appName, webApp)
+                    }
+
                     if (
                         webApp.redirectDomain &&
                         serverWithSubDomain.publicDomain !==
@@ -363,7 +378,7 @@ class LoadBalancerManager {
                                 forceSsl: forceSsl,
                                 websocketSupport: websocketSupport,
                                 publicDomain: d.publicDomain,
-                                localDomain: localDomain,
+                                localDomain: serverWithSubDomain.localDomain,
                                 nginxConfigTemplate: nginxConfigTemplate,
                                 staticWebRoot: '',
                                 customErrorPagesDirectory: '',
@@ -373,6 +388,12 @@ class LoadBalancerManager {
                                     : undefined,
                                 gzipOn: serverWithSubDomain.gzipOn,
                                 gzipTypes: serverWithSubDomain.gzipTypes,
+                                isBlueGreen: serverWithSubDomain.isBlueGreen,
+                                blueLocalDomain:
+                                    serverWithSubDomain.blueLocalDomain,
+                                greenLocalDomain:
+                                    serverWithSubDomain.greenLocalDomain,
+                                activeSlot: serverWithSubDomain.activeSlot,
                             }
                             if (
                                 webApp.redirectDomain &&
@@ -727,7 +748,7 @@ class LoadBalancerManager {
                 return ejs.render(defaultPageTemplate, {
                     message_title: 'Nothing here yet :/',
                     message_body: '',
-                    message_link: 'https://caprover.com/',
+                    message_link: 'https://captainops.kriaa.in/',
                     message_link_title: 'Read Docs',
                 })
             })
@@ -743,7 +764,7 @@ class LoadBalancerManager {
                 return ejs.render(defaultPageTemplate, {
                     message_title: 'An Error Occurred :/',
                     message_body: '',
-                    message_link: 'https://caprover.com/',
+                    message_link: 'https://captainops.kriaa.in/',
                     message_link_title: 'Read Docs',
                 })
             })
@@ -761,7 +782,7 @@ class LoadBalancerManager {
                     message_body:
                         "If you are the developer, check your application's logs. See the link below for details",
                     message_link:
-                        'https://caprover.com/docs/troubleshooting.html#successful-deploy-but-502-bad-gateway-error',
+                        'https://captainops.kriaa.in/docs/troubleshooting.html#successful-deploy-but-502-bad-gateway-error',
                     message_link_title: 'Docs - 502 Troubleshooting',
                 })
             })

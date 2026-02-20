@@ -5,7 +5,10 @@ if ! [ $(id -u) = 0 ]; then
    exit 1
 fi
 
-# on macos Catalina and above, /captain is a symb link. we cannot remove the folder so we delete all files inside
-# rm -rf /captain && mkdir /captain
-rm -rf /captain/*
-chmod -R 777 /captain/
+CAPTAIN_DATA_DIR="${CAPTAIN_BASE_DIRECTORY:-/Users/$SUDO_USER/captain-data}"
+
+# on macOS Catalina and above, the root filesystem is read-only.
+# Use a writable directory instead of /captain
+mkdir -p "$CAPTAIN_DATA_DIR"
+rm -rf "$CAPTAIN_DATA_DIR"/*
+chmod -R 777 "$CAPTAIN_DATA_DIR"

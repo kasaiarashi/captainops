@@ -245,6 +245,9 @@ export default class ProManager {
             case CapRoverEventType.OneClickAppListFetched:
             case CapRoverEventType.OneClickAppDeployStarted:
                 return false
+
+            default:
+                return false
         }
     }
 

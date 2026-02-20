@@ -167,9 +167,10 @@ router.post('/register/', function (req, res, next) {
     const projectId = `${req.body.projectId || ''}`
     const hasPersistentData = !!req.body.hasPersistentData
     const isDetachedBuild = !!req.query.detached
+    const environment = req.body.environment
 
     return registerAppDefinition(
-        { appName, projectId, hasPersistentData, isDetachedBuild },
+        { appName, projectId, hasPersistentData, isDetachedBuild, environment },
         dataStore,
         serviceManager
     )

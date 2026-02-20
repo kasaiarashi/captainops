@@ -19,7 +19,9 @@ import CaptainConstants from '../utils/CaptainConstants'
 import Logger from '../utils/Logger'
 import Utils from '../utils/Utils'
 import Authenticator from './Authenticator'
+import BlueGreenManager from './BlueGreenManager'
 import DockerRegistryHelper from './DockerRegistryHelper'
+import HealthChecker from './HealthChecker'
 import ImageMaker, { BuildLogsManager } from './ImageMaker'
 import { EventLogger } from './events/EventLogger'
 import {
@@ -76,6 +78,7 @@ class ServiceManager {
     private isReady: boolean
     private imageMaker: ImageMaker
     private dockerRegistryHelper: DockerRegistryHelper
+    private blueGreenManager: BlueGreenManager
 
     constructor(
         private dataStore: DataStore,
@@ -99,9 +102,33 @@ class ServiceManager {
             this.dataStore.getNameSpace(),
             this.buildLogsManager
         )
+        const healthChecker = new HealthChecker(
+            CaptainConstants.captainNetworkName
+        )
+        this.blueGreenManager = new BlueGreenManager(
+            this.dataStore,
+            this.dockerApi,
+            this.loadBalancerManager,
+            healthChecker,
+            this.eventLogger,
+            this.imageMaker,
+            this.dockerRegistryHelper
+        )
     }
 
     getRegistryHelper() {
+        return this.dockerRegistryHelper
+    }
+
+    getBlueGreenManager() {
+        return this.blueGreenManager
+    }
+
+    getImageMaker() {
+        return this.imageMaker
+    }
+
+    getDockerRegistryHelper() {
         return this.dockerRegistryHelper
     }
 
@@ -109,8 +136,16 @@ class ServiceManager {
         return this.isReady
     }
 
-    scheduleDeployNewVersion(appName: string, source: IImageSource) {
+    async scheduleDeployNewVersion(appName: string, source: IImageSource) {
         const self = this
+
+        // Check if blue-green is enabled for this app
+        const appDef = await this.dataStore
+            .getAppsDataStore()
+            .getAppDefinition(appName)
+        if (appDef.blueGreen?.enabled) {
+            return this.blueGreenManager.deployToInactiveSlot(appName, source)
+        }
 
         const activeBuildAppName = self.isAnyBuildRunning()
         this.activeOrScheduledBuilds[appName] = true
@@ -472,11 +507,22 @@ class ServiceManager {
         Logger.d(`Removing service for: ${appNames.join(', ')}`)
         const self = this
 
+        const removeServiceSafe = async function (svcName: string) {
+            const isRunning =
+                await self.dockerApi.isServiceRunningByName(svcName)
+            if (isRunning) {
+                await self.dockerApi.removeServiceByName(svcName)
+            } else {
+                Logger.w(
+                    `Cannot delete service... It is not running: ${svcName}`
+                )
+            }
+        }
+
         const removeAppPromise = function (appName: string) {
             const serviceName = self.dataStore
                 .getAppsDataStore()
                 .getServiceName(appName)
-            const dockerApi = self.dockerApi
             const dataStore = self.dataStore
 
             return Promise.resolve()
@@ -484,17 +530,24 @@ class ServiceManager {
                     return self.ensureNotBuilding(appName)
                 })
                 .then(function () {
-                    Logger.d(`Check if service is running: ${serviceName}`)
-                    return dockerApi.isServiceRunningByName(serviceName)
+                    return dataStore
+                        .getAppsDataStore()
+                        .getAppDefinition(appName)
                 })
-                .then(function (isRunning) {
-                    if (isRunning) {
-                        return dockerApi.removeServiceByName(serviceName)
+                .then(async function (appDef) {
+                    if (appDef.blueGreen?.enabled) {
+                        // Remove both slot services
+                        const blueServiceName = dataStore
+                            .getAppsDataStore()
+                            .getBlueServiceName(appName)
+                        const greenServiceName = dataStore
+                            .getAppsDataStore()
+                            .getGreenServiceName(appName)
+                        await removeServiceSafe(blueServiceName)
+                        await removeServiceSafe(greenServiceName)
+                        self.blueGreenManager.cancelAutoSwitch(appName)
                     } else {
-                        Logger.w(
-                            `Cannot delete service... It is not running: ${serviceName}`
-                        )
-                        return true
+                        await removeServiceSafe(serviceName)
                     }
                 })
                 .then(function () {

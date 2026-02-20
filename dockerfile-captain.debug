@@ -5,7 +5,7 @@ RUN apt-get -y install netcat-traditional socat
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
-ENV NODE_ENV development
+ENV NODE_ENV=development
 
 EXPOSE 38000
 EXPOSE 3000
